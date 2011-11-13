@@ -42,32 +42,36 @@ end
 
 # app/views/accounts/form.html.erb
 
+You need to provide the following fields in your form:
+
+ * text_field_tag :credit_card_number, nil, :name => "" 
+ * f.hidden_field :credit_card_token, :value => ""
+ * f.date_select :credit_card_expires_on, :start_year => Date.today.year, :add_month_numbers => true, :order => [:month, :year]
+ 
+It doesn't matter what resource these form fields are on, if they use the above names the following JS will find them.
+
 <script type="text/javascript" src="https://js.stripe.com/v1/"></script>
 <script type="text/javascript">
-  <% if Rails.env.production? %>
-    Stripe.setPublishableKey('XX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-  <% else %>
-    Stripe.setPublishableKey('XX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-  <% end %>
+  Stripe.setPublishableKey('<%= STRIPE_PUBLISHABLE_KEY %>');
 
   $(document).ready(function() {
-    $("form.account_edit").submit(function(event) {
+    $("form.user_edit").submit(function(event) {
       var form = $(this);
       form.find(".billing-errors").html("");
       if(form.find('#credit_card_number').val()) {
         form.find('[type=submit]').attr("disabled", "disabled");
         Stripe.createToken({
-          number: form.find('#credit_card_number').val(),
-          exp_month: form.find('#account_credit_card_expires_on_2i').val(),
-          exp_year: form.find('#account_credit_card_expires_on_1i').val()
+          number: form.find('[id*=credit_card_number]').val(),
+          exp_month: form.find('[id*=credit_card_expires_on_2i]').val(),
+          exp_year: form.find('[id*=credit_card_expires_on_1i]').val(),
+          coupon: form.find('[name*=coupon]').val()
         }, function(status, response) {
           if (response.error) {
             form.find(".billing-errors").html(response.error.message);
             form.find('[type=submit]').removeAttr("disabled");
           } else {
-            form
-              .append("<input type='hidden' name='account[credit_card_token]' value='" + response['id'] + "'/>")
-              .get(0).submit();
+            form.find("[name*=credit_card_token]").val(response['id']);
+            form.get(0).submit();
           }
         });
         return false;
