@@ -21,3 +21,19 @@ class StripeController < ApplicationController
     head :ok
   end
 end
+
+
+
+# app/controllers/accounts_controller.rb
+
+class AccountsController < ApplicationController
+  def cancel
+    current_account.subscription_cancel!
+    redirect_to settings_account_path, :notice => "Your account has been canceled."
+  end
+
+  def reactivate
+    current_account.subscription_reactivate!
+    redirect_to settings_account_path, :notice => "Your account has been reactivated."
+  end
+end
