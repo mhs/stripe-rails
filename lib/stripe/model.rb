@@ -3,11 +3,6 @@ module Stripe::Model
   class MissingModelFields < Error ; end
   
   def self.included(base)
-    required_fields = %w(
-      subscription_customer_id subscription_status subscription_ends_at
-      credit_card_type credit_card_number credit_card_expires_on
-    )
-    
     if Object.const_defined?(:Mongoid) && base.included_modules.include?(Mongoid::Document)
       base.field :subscription_customer_id
       base.field :subscription_status
@@ -16,6 +11,10 @@ module Stripe::Model
       base.field :credit_card_number
       base.field :credit_card_expires_on, :type => Date
     else
+      required_fields = %w(
+        subscription_customer_id subscription_status subscription_ends_at
+        credit_card_type credit_card_number credit_card_expires_on
+      )
       unless required_fields.all?{ |field| respond_to?(:field) }
         print "WARN: ",
           "Missing required model fields. Please make sure the following fields ",
@@ -35,10 +34,10 @@ module Stripe::Model
     def subscription_event(params)
       user = where(:subscription_customer_id => params[:customer]).first
       if params[:event] == "recurring_payment_succeeded"
-        # TODO: Set status from stripe
+        # TODO: Do I need to set subscription_ends_at to invoice/lines/subscriptions[0]/period/end or invoice/period_end
         user.update_attributes! :subscription_status => "active", :subscription_ends_at => Time.at(params[:invoice][:period_end])
       elsif params[:event] == "subscription_final_payment_attempt_failed"
-        # TODO: Do I need to set subscription_ends_at?
+        # TODO: Do I need to set subscription_ends_at to canceled_at or ended_at?
         user.update_attributes! :subscription_status => params[:subscription][:status]
       end
     end
@@ -54,7 +53,7 @@ module Stripe::Model
   def subscription_cancel!
     customer = Stripe::Customer.retrieve(subscription_customer_id)
     customer.cancel_subscription(:at_period_end => true)
-    # TODO: set subscription_ends_at?
+    # TODO: Do I need to set subscription_ends_at to canceled_at or ended_at or current_period_end
     update_attributes! :subscription_status => "canceled"
   end
   
@@ -101,7 +100,7 @@ private
       self.credit_card_expires_on = Date.new(customer.active_card.exp_year, customer.active_card.exp_month).end_of_month
     end
   rescue Stripe::InvalidRequestError => e
-    # TODO: This doesn't show up
+    # TODO: This error never makes it back to the user
     errors[:base] << e.message
     false
   end
