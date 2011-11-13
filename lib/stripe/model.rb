@@ -63,7 +63,7 @@ private
   def subscription_create
     customer = Stripe::Customer.create(
       :plan => STRIPE_PLAN_ID,
-      :trial_end => STRIPE_TRIAL_PERIOD.to_i,
+      :trial_end => STRIPE_TRIAL_PERIOD.from_now.to_i,
       :description => email,
       :email => email
     )
