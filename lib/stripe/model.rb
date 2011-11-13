@@ -1,6 +1,7 @@
 module Stripe::Model
   def self.included(base)
     if base.included_modules.include?(Mongoid::Document)
+    if Object.const_defined?(:Mongoid) && base.included_modules.include?(Mongoid::Document)
       base.field :subscription_customer_id
       base.field :subscription_status
       base.field :subscription_ends_at, :type => Time
