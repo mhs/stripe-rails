@@ -1,6 +1,13 @@
 module Stripe::Model
+  class Error < ::RuntimeError ; end
+  class MissingModelFields < Error ; end
+  
   def self.included(base)
-    if base.included_modules.include?(Mongoid::Document)
+    required_fields = %w(
+      subscription_customer_id subscription_status subscription_ends_at
+      credit_card_type credit_card_number credit_card_expires_on
+    )
+    
     if Object.const_defined?(:Mongoid) && base.included_modules.include?(Mongoid::Document)
       base.field :subscription_customer_id
       base.field :subscription_status
@@ -9,7 +16,12 @@ module Stripe::Model
       base.field :credit_card_number
       base.field :credit_card_expires_on, :type => Date
     else
-      # TODO: Validate that these columns exist
+      unless required_fields.all?{ |field| respond_to?(:field) }
+        print "WARN: ",
+          "Missing required model fields. Please make sure the following fields ",
+          "are available on your model: #{required_fields.join(', ')}",
+          "\n"
+      end
     end
 
     base.send :attr_accessor, :credit_card_token
