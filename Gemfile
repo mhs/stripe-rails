@@ -1,4 +1,5 @@
 # A sample Gemfile
 source "http://rubygems.org"
 
-gem "stripe"
+gemspec
+

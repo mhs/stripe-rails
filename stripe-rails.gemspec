@@ -7,4 +7,6 @@ Gem::Specification.new do |s|
   s.authors = ["Mark Van Holstyn", "Zach Dennis"]
   s.email = %q{humans@mutuallyhuman.com}
   s.files = Dir["lib/**/*"]
+  
+  s.add_dependency "stripe"
 end
