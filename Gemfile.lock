@@ -1,0 +1,14 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    mime-types (1.17.2)
+    rest-client (1.6.7)
+      mime-types (>= 1.16)
+    stripe (1.5.23)
+      rest-client (~> 1.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  stripe
