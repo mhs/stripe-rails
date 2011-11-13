@@ -37,3 +37,41 @@ class AccountsController < ApplicationController
     redirect_to settings_account_path, :notice => "Your account has been reactivated."
   end
 end
+
+
+
+# app/views/accounts/form.html.erb
+
+<script type="text/javascript" src="https://js.stripe.com/v1/"></script>
+<script type="text/javascript">
+  <% if Rails.env.production? %>
+    Stripe.setPublishableKey('XX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+  <% else %>
+    Stripe.setPublishableKey('XX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+  <% end %>
+
+  $(document).ready(function() {
+    $("form.account_edit").submit(function(event) {
+      var form = $(this);
+      form.find(".billing-errors").html("");
+      if(form.find('#credit_card_number').val()) {
+        form.find('[type=submit]').attr("disabled", "disabled");
+        Stripe.createToken({
+          number: form.find('#credit_card_number').val(),
+          exp_month: form.find('#account_credit_card_expires_on_2i').val(),
+          exp_year: form.find('#account_credit_card_expires_on_1i').val()
+        }, function(status, response) {
+          if (response.error) {
+            form.find(".billing-errors").html(response.error.message);
+            form.find('[type=submit]').removeAttr("disabled");
+          } else {
+            form
+              .append("<input type='hidden' name='account[credit_card_token]' value='" + response['id'] + "'/>")
+              .get(0).submit();
+          }
+        });
+        return false;
+      }
+    });
+  });
+</script>
