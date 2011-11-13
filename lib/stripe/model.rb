@@ -4,6 +4,7 @@ module Stripe::Model
   
   def self.included(base)
     if Object.const_defined?(:Mongoid) && base.included_modules.include?(Mongoid::Document)
+      base.field :subscription_coupon_code
       base.field :subscription_customer_id
       base.field :subscription_status
       base.field :subscription_ends_at, :type => Time
@@ -12,14 +13,17 @@ module Stripe::Model
       base.field :credit_card_expires_on, :type => Date
     else
       required_fields = %w(
-        subscription_customer_id subscription_status subscription_ends_at
+        subscription_customer_id subscription_status subscription_ends_at subscription_coupon_code
         credit_card_type credit_card_number credit_card_expires_on
       )
-      unless required_fields.all?{ |field| respond_to?(:field) }
-        print "WARN: ",
-          "Missing required model fields. Please make sure the following fields ",
-          "are available on your model: #{required_fields.join(', ')}",
-          "\n"
+
+      instance = base.new
+      required_fields.each do |field| 
+        unless instance.respond_to?(field)
+          msg = "WARN: Missing required model field: #{field}. stripe-rails will not work properly without it."
+          base.logger.warn msg
+          puts msg
+        end
       end
     end
 
@@ -73,12 +77,15 @@ module Stripe::Model
   
 private
   def subscription_create
-    customer = Stripe::Customer.create(
+    params = {
       :plan => STRIPE_PLAN_ID,
       :trial_end => STRIPE_TRIAL_PERIOD.from_now.to_i,
       :description => email,
       :email => email
-    )
+    }
+    params[:coupon] = subscription_coupon_code if subscription_coupon_code.present?
+    customer = Stripe::Customer.create(params)
+
     self.subscription_customer_id = customer.id
     self.subscription_status = customer.subscription.status
     self.subscription_ends_at = Time.at(customer.subscription.current_period_end)
