@@ -10,3 +10,14 @@ end
 
 STRIPE_PLAN_ID = "some-awesome-plan"
 STRIPE_TRIAL_PERIOD = 1.month
+
+
+
+# app/controllers/stripe_controller.rb
+
+class StripeController < ApplicationController
+  def webhook
+    Account.subscription_event(params)
+    head :ok
+  end
+end
