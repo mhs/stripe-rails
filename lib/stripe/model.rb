@@ -49,9 +49,9 @@ module Stripe::Model
 
   def subscription_reactivate!
     customer = Stripe::Customer.retrieve(subscription_customer_id)
-    trial_end_at = subscription_ends_at > Time.now ? subscription_ends_at : nil
-    customer.update_subscription(:plan => STRIPE_PLAN_ID, :trial_end => trial_end_at.to_i)
-    update_attributes! :subscription_status => customer.subscription.status, :subscription_ends_at => Time.at(customer.subscription.current_period_end)
+    trial_end_at = subscription_ends_at > Time.now ? subscription_ends_at.to_i : nil
+    customer.update_subscription(:plan => STRIPE_PLAN_ID, :trial_end => trial_end_at)
+    update_attributes! :subscription_status => customer.subscription.status, :subscription_ends_at => Time.at(customer.subscription.current_period_end.to_i)
   end
 
   def subscription_cancel!
