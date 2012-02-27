@@ -30,16 +30,21 @@ module Stripe::Model
     base.send :attr_accessor, :credit_card_token
     base.before_create :subscription_create
     base.before_update :subscription_update
-    
+
     base.extend ClassMethods
   end
 
   module ClassMethods
-    def subscription_event(params)
+    def subscription_event(stripe_subscription_id, params)
       user = where(:subscription_customer_id => params["customer"]).first
       if params["event"] == "recurring_payment_succeeded"
-        # TODO: Do I need to set subscription_ends_at to invoice/lines/subscriptions[0]/period/end or invoice/period_end
-        user.update_attributes! :subscription_status => "active", :subscription_ends_at => Time.at(params["invoice"]["period_end"].to_i)
+        # We need to set subscription_ends_at to invoice/lines/subscriptions[0]/period/end
+        subscription = params["invoice"]["lines"]["subscriptions"].detect{ |sub| sub["plan"]["id"] == stripe_subscription_id }
+        if subscription
+          user.update_attributes! :subscription_status => "active", :subscription_ends_at => Time.at(subscription["period"]["end"].to_i)
+        else
+          raise StripeSubscriptionNotFound, "No subscription found with ID '#{stripe_subscription_id}'. \n\n #{params.inspect}"
+        end
       elsif params["event"] == "subscription_final_payment_attempt_failed"
         # TODO: Do I need to set subscription_ends_at to canceled_at or ended_at?
         user.update_attributes! :subscription_status => params["subscription"]["status"]
