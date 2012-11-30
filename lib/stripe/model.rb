@@ -1,7 +1,7 @@
 module Stripe::Model
   class Error < ::RuntimeError ; end
   class MissingModelFields < Error ; end
-  
+
   def self.included(base)
     if Object.const_defined?(:Mongoid) && base.included_modules.include?(Mongoid::Document)
       base.field :subscription_coupon_code
@@ -18,7 +18,7 @@ module Stripe::Model
       )
 
       instance = base.new
-      required_fields.each do |field| 
+      required_fields.each do |field|
         unless instance.respond_to?(field)
           msg = "WARN: Missing required model field: #{field}. stripe-rails will not work properly without it."
           base.logger.warn msg
@@ -65,13 +65,13 @@ module Stripe::Model
     # TODO: Do I need to set subscription_ends_at to canceled_at or ended_at or current_period_end
     update_attributes! :subscription_status => "canceled"
   end
-  
+
   def subscription_valid?
     # NOTE: Stripe billing may not be complete by the subscription_ends_at time. Pad this check with an hour to ensure everything works properly.
     # TODO: Change all this to DATES?
     subscription_ends_at >= 1.hour.ago
   end
-  
+
   def subscription_active?
     subscription_status == "trialing" || subscription_status == "active"
   end
@@ -79,7 +79,7 @@ module Stripe::Model
   def subscription_canceled?
     subscription_status == "canceled"
   end
-  
+
 private
   def subscription_create
     params = {
