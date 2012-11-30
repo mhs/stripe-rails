@@ -108,9 +108,11 @@ private
       customer.card = credit_card_token
       customer.save
 
-      self.credit_card_type = customer.active_card.type
-      self.credit_card_number = customer.active_card.last4
-      self.credit_card_expires_on = Date.new(customer.active_card.exp_year, customer.active_card.exp_month).end_of_month
+      if customer.respond_to?(:active_card)
+        self.credit_card_type = customer.active_card.type
+        self.credit_card_number = customer.active_card.last4
+        self.credit_card_expires_on = Date.new(customer.active_card.exp_year, customer.active_card.exp_month).end_of_month
+      end
     end
   rescue Stripe::InvalidRequestError => e
     # TODO: This error never makes it back to the user
